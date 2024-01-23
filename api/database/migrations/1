@@ -1,0 +1,1 @@
+CREATE TABLE sys_migrations ( id INT not NULL, exec_time INT NOT NULL);
