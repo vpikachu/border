@@ -1,0 +1,16 @@
+﻿@page "/boards"
+
+
+<MudBreadcrumbs Items="_items"></MudBreadcrumbs>
+
+@code {
+    protected override void OnInitialized()
+    {
+        
+    }
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Boards", href: "/boards"),
+        new BreadcrumbItem("Link 1", href: "#"),        
+    };
+}
