@@ -22,10 +22,10 @@ namespace border.api.Endpoints
             {
                 return await repository.GetBoard(boardId) is Board board ? TypedResults.Ok(board) : TypedResults.NotFound();
             });
-            app.MapPost("/boards", async Task<Results<Ok<Board>, BadRequest>> ([FromBody] BoardPostRequest board, BoardsRepository repository) =>
+            /*app.MapPost("/boards", async Task<Results<Ok<Board>, BadRequest>> ([FromBody] BoardPostRequest board, BoardsRepository repository) =>
             {
                 return await repository.GetBoard(boardId) is Board board ? TypedResults.Ok(board) : TypedResults.NotFound();
-            });
+            });*/
         }
     }
 }
