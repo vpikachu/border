@@ -4,8 +4,7 @@ using border.api.Endpoints;
 using border.api.Models;
 using border.api.Repositories;
 using border.api.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,11 +14,10 @@ builder.Services.AddTransient<BoardsRepository>();
 
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultScheme = BearerTokenDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
     })
-    .AddCookie()
-    .AddGoogle(googleOptions =>
+    .AddBearerToken().AddGoogle(googleOptions =>
     {
         var authSettings = new AuthSettings();
         builder.Configuration.GetSection("Authentication").Bind(authSettings);
@@ -27,6 +25,7 @@ builder.Services.AddAuthentication(options =>
             || string.IsNullOrEmpty(authSettings.Google.ClientSecret)) throw new Exception("Google auth settings are not configured");
         googleOptions.ClientId = authSettings.Google.ClientId;
         googleOptions.ClientSecret = authSettings.Google.ClientSecret;
+        googleOptions.SignInScheme = BearerTokenDefaults.AuthenticationScheme;
         googleOptions.Events.OnRedirectToAuthorizationEndpoint = context =>
         {
             context.Response.Redirect(context.RedirectUri + "&prompt=consent");
@@ -35,13 +34,15 @@ builder.Services.AddAuthentication(options =>
     }
 );
 builder.Services.AddAuthorization();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
 app.DoMigrate();
-app.MapBoardsEndpoints();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/", (ClaimsPrincipal user) =>
 {
@@ -53,17 +54,8 @@ app.MapGet("/", (ClaimsPrincipal user) =>
     else
         return Results.Ok("border REST API.");
 });
-
-app.MapGet("/signin", async signinApp =>
-{
-    await signinApp.ChallengeAsync(new AuthenticationProperties() { RedirectUri = "/" });
-    return;
-});
-
-app.MapGet("/signout", async signinApp =>
-{
-    await signinApp.SignOutAsync(new AuthenticationProperties() { RedirectUri = "/" });
-    return;
-});
+app.MapBoardsEndpoints();
+app.MapSignEndpoints();
+app.MapOpenApi();
 
 app.Run();
